@@ -9,44 +9,24 @@ router = APIRouter(
 )
 
 @router.get("")
-def find_all(studentId: str):
+def find_all(studentId: str) -> ApiResponse[list[Pet]]:
     pets = pets_service.find_all_for_student(studentId)
-    return ApiResponse.ok(
-        data=pets, 
-        message="Mascotas obtenidas exitosamente"
-    )
+    return ApiResponse.ok(data=pets, message="Mascotas obtenidas")
+
 
 @router.post("", status_code=201)
-def create(studentId: str, body: CreatePetDto):
-    new_pet = pets_service.create(studentId, body)
-    return ApiResponse.ok(
-        data=new_pet, 
-        message="Mascota creada exitosamente", 
-        status_code=201
-    )
+def create(studentId: str, body: CreatePetDto) -> ApiResponse[Pet]:
+    pet = pets_service.create(studentId, body)
+    return ApiResponse.ok(data=pet, message="Mascota creada", status_code=201)
+
 
 @router.patch("/{petId}")
-def update(studentId: str, petId: str, body: UpdatePetDto):
-    updated_pet = pets_service.update(studentId, petId, body)
-    if not updated_pet:
-        return ApiResponse.error(
-            message=f"No se encontró la mascota con ID {petId}", 
-            status_code=404
-        )
-    return ApiResponse.ok(
-        data=updated_pet, 
-        message="Mascota actualizada exitosamente"
-    )
+def update(studentId: str, petId: str, body: UpdatePetDto) -> ApiResponse[Pet]:
+    pet = pets_service.update(studentId, petId, body)
+    return ApiResponse.ok(data=pet, message="Mascota actualizada")
+
 
 @router.delete("/{petId}")
-def delete(studentId: str, petId: str):
-    deleted_pet = pets_service.delete(studentId, petId)
-    if not deleted_pet:
-        return ApiResponse.error(
-            message=f"No se encontró la mascota con ID {petId}", 
-            status_code=404
-        )
-    return ApiResponse.ok(
-        data=deleted_pet, 
-        message="Mascota eliminada exitosamente"
-    )
+def delete(studentId: str, petId: str) -> ApiResponse[Pet]:
+    deleted = pets_service.delete(studentId, petId)
+    return ApiResponse.ok(data=deleted, message="Mascota eliminada")
