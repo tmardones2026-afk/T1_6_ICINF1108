@@ -76,3 +76,12 @@ La aplicación queda disponible en:
 - `make format` — formatea el código con Ruff
 - `make format-check` — verifica el formato
 - `make clean` — elimina `.venv`, cachés y artefactos
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Estudiante obtenido exitosamente",
+  "data": { "id": 1, "nombre": "Alonso" },
+  "timestamp": "2026-08-26T12:00:00Z"
+}
