@@ -1,35 +1,31 @@
-from typing import Generic, Optional, TypeVar
+from datetime import datetime, timezone
+from typing import Generic, Optional, TypeVar, Union
 
 from pydantic import BaseModel
 
 T = TypeVar("T")
 
 
-class ErrorDetail(BaseModel):
-    type: str
-    details: str
-
-
 class ApiResponse(BaseModel, Generic[T]):
     success: bool
-    status_code: int
+    statusCode: int
     message: str
-    data: Optional[T] = None
-    error: Optional[ErrorDetail] = None
+    data: Optional[Union[T, list[T]]] = None
+    timestamp: str
 
     @classmethod
     def ok(
         cls,
-        data: T,
+        data: Optional[Union[T, list[T]]] = None,
         message: str = "OK",
         status_code: int = 200,
     ) -> "ApiResponse[T]":
         return cls(
             success=True,
-            status_code=status_code,
+            statusCode=status_code,
             message=message,
             data=data,
-            error=None,
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
     @classmethod
@@ -37,13 +33,12 @@ class ApiResponse(BaseModel, Generic[T]):
         cls,
         message: str,
         status_code: int,
-        error_type: str,
-        details: str,
-    ) -> "ApiResponse[None]":
+        data: Optional[Union[T, list[T]]] = None,
+    ) -> "ApiResponse[T]":
         return cls(
             success=False,
-            status_code=status_code,
+            statusCode=status_code,
             message=message,
-            data=None,
-            error=ErrorDetail(type=error_type, details=details),
+            data=data,
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )

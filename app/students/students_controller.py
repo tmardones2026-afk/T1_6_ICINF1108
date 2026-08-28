@@ -8,8 +8,8 @@ from app.students.students_service import students_service
 router = APIRouter(prefix="/api/students", tags=["Students"])
 
 
-@router.get("", response_model=ApiResponse[list[Student]])
-def find_all() -> ApiResponse[list[Student]]:
+@router.get("", response_model=ApiResponse[Student])
+def find_all() -> ApiResponse[Student]:
     students = students_service.find_all()
     return ApiResponse.ok(data=students, message="Estudiantes obtenidos correctamente")
 
