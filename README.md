@@ -84,6 +84,13 @@ La aplicación queda disponible en:
 
 Todas las respuestas de la API (éxito y error) siguen un formato único definido en `app/shared/api_response.py`:
 
+
+#COMANDOO
+
+## Estándar de respuestas HTTP JSON
+
+Todas las respuestas de la API (éxito y error) siguen un formato único definido en `app/shared/api_response.py`:
+
 ```json
 {
   "success": boolean,
