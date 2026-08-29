@@ -76,3 +76,28 @@ La aplicación queda disponible en:
 - `make format` — formatea el código con Ruff
 - `make format-check` — verifica el formato
 - `make clean` — elimina `.venv`, cachés y artefactos
+
+
+#COMANDOO
+
+## Estándar de respuestas HTTP JSON
+
+Todas las respuestas de la API (éxito y error) siguen un formato único definido en `app/shared/api_response.py`:
+
+```json
+{
+  "success": boolean,
+  "statusCode": number,
+  "message": string,
+  "data": T | T[] | null,
+  "timestamp": string (ISO 8601)
+}
+```
+
+- `success`: indica si la operación fue exitosa.
+- `statusCode`: código HTTP de la respuesta.
+- `message`: descripción legible del resultado.
+- `data`: el recurso solicitado (objeto único o lista) en éxito, o `null` en error.
+- `timestamp`: fecha y hora de la respuesta en formato ISO 8601.
+
+Los errores controlados (404, 409, 422) se manejan de forma centralizada mediante `exception_handler`s globales en `main.py`, por lo que los controladores no necesitan repetir esta lógica.
