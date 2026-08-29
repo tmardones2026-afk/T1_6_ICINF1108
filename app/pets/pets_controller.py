@@ -1,12 +1,9 @@
-from fastapi import APIRouter
-from app.pets.pets_schemas import CreatePetDto, UpdatePetDto
-from app.pets.pets_service import pets_service
+from fastapi import APIRouter, status
 from app.shared.api_response import ApiResponse
+from app.pets.pets_service import pets_service
+from app.pets.pets_schemas import CreatePetDto, UpdatePetDto, Pet
 
-router = APIRouter(
-    prefix="/api/students/{studentId}/pets",
-    tags=["Pets"],
-)
+router = APIRouter(prefix="/api/students", tags=["Pets"])
 
 @router.get("")
 def find_all(studentId: str) -> ApiResponse[list[Pet]]:
