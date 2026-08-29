@@ -4,6 +4,7 @@ from uuid import uuid4
 from fastapi import HTTPException, status
 
 from app.shared.in_memory_store import InMemoryStore
+from app.shared.response_schema import ApiResponse
 from app.students.students_schemas import CreateStudentDto, Student, UpdateStudentDto
 
 
@@ -11,10 +12,16 @@ class StudentsService:
     def __init__(self) -> None:
         self.store: InMemoryStore[Student] = InMemoryStore()
 
-    def find_all(self) -> list[Student]:
-        return sorted(self.store.find_all(), key=lambda s: s.createdAt, reverse=True)
+    def find_all(self) -> ApiResponse[list[Student]]:
+        students = sorted(self.store.find_all(), key=lambda s: s.createdAt, reverse=True)
+        return ApiResponse(
+            success=True,
+            status_code=status.HTTP_200_OK,
+            message="Lista de estudiantes obtenida exitosamente",
+            data=students,
+        )
 
-    def find_by_id(self, student_id: str) -> Student:
+    def find_by_id(self, student_id: str) -> ApiResponse[Student]:
         student = self.store.get(student_id)
 
         if student is None:
@@ -23,9 +30,14 @@ class StudentsService:
                 detail="Estudiante no encontrado",
             )
 
-        return student
+        return ApiResponse(
+            success=True,
+            status_code=status.HTTP_200_OK,
+            message="Estudiante encontrado exitosamente",
+            data=student,
+        )
 
-    def create(self, data: CreateStudentDto) -> Student:
+    def create(self, data: CreateStudentDto) -> ApiResponse[Student]:
         self.assert_email_available(data.email)
 
         now = datetime.now()
@@ -39,10 +51,17 @@ class StudentsService:
         )
 
         self.store.set(student)
-        return student
+        return ApiResponse(
+            success=True,
+            status_code=status.HTTP_201_CREATED,
+            message="Estudiante creado exitosamente",
+            data=student,
+        )
 
-    def update(self, student_id: str, data: UpdateStudentDto) -> Student:
-        existing = self.find_by_id(student_id)
+    def update(self, student_id: str, data: UpdateStudentDto) -> ApiResponse[Student]:
+        # Para obtener el estudiante existente se extrae el objeto .data de la respuesta de find_by_id
+        existing_res = self.find_by_id(student_id)
+        existing = existing_res.data
 
         if data.email and data.email != existing.email:
             self.assert_email_available(data.email)
@@ -55,13 +74,24 @@ class StudentsService:
         )
 
         self.store.set(updated)
-        return updated
+        return ApiResponse(
+            success=True,
+            status_code=status.HTTP_200_OK,
+            message="Estudiante actualizado exitosamente",
+            data=updated,
+        )
 
-    def delete(self, student_id: str) -> Student:
-        existing = self.find_by_id(student_id)
+    def delete(self, student_id: str) -> ApiResponse[Student]:
+        existing_res = self.find_by_id(student_id)
+        existing = existing_res.data
         self.store.delete(student_id)
 
-        return existing
+        return ApiResponse(
+            success=True,
+            status_code=status.HTTP_200_OK,
+            message="Estudiante eliminado exitosamente",
+            data=existing,
+        )
 
     def assert_email_available(self, email: str) -> None:
         exists = any(student.email == email for student in self.store.find_all())

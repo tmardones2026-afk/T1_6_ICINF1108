@@ -1,32 +1,27 @@
-from datetime import datetime
+from typing import List, Optional
+from pydantic import BaseModel
+from app.shared.response_schema import ApiResponse  # Importa tuApiResponse generico
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+# --- Esquema base del estudiante ---
+class StudentBase(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
 
-NO_HTML_PATTERN = r"^[^<>]*$"
+class StudentCreate(StudentBase):
+    pass
 
+class StudentRead(StudentBase):
+    id: int
 
-class Student(BaseModel):
-    id: str
-    name: str
-    email: EmailStr
-    age: int
-    createdAt: datetime
-    updatedAt: datetime
+    class Config:
+        from_attributes = True
 
+# --- Esquemas estandarizados envueltos con ApiResponse ---
+# Respuesta para un solo estudiante (GET /students/{id}, POST, PUT)
+class SingleStudentResponse(ApiResponse[StudentRead]):
+    pass
 
-class CreateStudentDto(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    name: str = Field(min_length=3, max_length=100, pattern=NO_HTML_PATTERN)
-    email: EmailStr
-    age: int = Field(ge=18, le=99)
-
-
-class UpdateStudentDto(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    name: str | None = Field(
-        default=None, min_length=3, max_length=100, pattern=NO_HTML_PATTERN
-    )
-    email: EmailStr | None = None
-    age: int | None = Field(default=None, ge=18, le=99)
+# Respuesta para una lista de estudiantes (GET /students)
+class ListStudentResponse(ApiResponse[List[StudentRead]]):
+    pass
