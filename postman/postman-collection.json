@@ -1,0 +1,180 @@
+{
+  "info": {
+    "name": "Reserva de Salas API - Pruebas QA",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "roomId",
+      "value": ""
+    },
+    {
+      "key": "reservationId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Salas",
+      "item": [
+        {
+          "name": "TC-ROOM-01: Crear Sala Válida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Estructura estándar API', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.true;",
+                  "    pm.expect(json.data).to.have.property('id');",
+                  "    pm.collectionVariables.set('roomId', json.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Laboratorio de Informática 1\",\n  \"location\": \"Edificio C, Piso 2\",\n  \"capacity\": 20,\n  \"type\": \"LABORATORY\",\n  \"equipment\": [\"PCs\", \"Proyector\", \"Pizarra\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/rooms", "host": ["{{baseUrl}}"], "path": ["api", "rooms"] }
+          }
+        },
+        {
+          "name": "TC-ROOM-02: Error al Crear Sala (Datos Inválidos)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 422', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": \"Edificio B\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/rooms", "host": ["{{baseUrl}}"], "path": ["api", "rooms"] }
+          }
+        },
+        {
+          "name": "TC-ROOM-03: Listar Salas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Respuesta contiene lista', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/rooms", "host": ["{{baseUrl}}"], "path": ["api", "rooms"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Reservas",
+      "item": [
+        {
+          "name": "TC-RES-01: Crear Reserva Exitosa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 201', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.id) { pm.collectionVariables.set('reservationId', json.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomId\": \"{{roomId}}\",\n  \"userId\": \"user-123\",\n  \"date\": \"2026-10-15\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/reservations", "host": ["{{baseUrl}}"], "path": ["api", "reservations"] }
+          }
+        },
+        {
+          "name": "TC-RES-02: Conflicto de Horario (Error 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Mensaje indica traslape de horario', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomId\": \"{{roomId}}\",\n  \"userId\": \"user-456\",\n  \"date\": \"2026-10-15\",\n  \"startTime\": \"11:00\",\n  \"endTime\": \"13:00\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/reservations", "host": ["{{baseUrl}}"], "path": ["api", "reservations"] }
+          }
+        },
+        {
+          "name": "TC-RES-03: Listar con Filtro, Orden y Paginación",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations?roomId={{roomId}}&sort=date&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations"],
+              "query": [
+                { "key": "roomId", "value": "{{roomId}}" },
+                { "key": "sort", "value": "date" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
