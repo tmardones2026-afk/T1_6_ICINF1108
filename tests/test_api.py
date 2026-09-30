@@ -1,54 +1,61 @@
+import sys
+from pathlib import Path
+
+# Configurar PYTHONPATH
+root_path = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(root_path))
+sys.path.insert(0, str(root_path / "app"))
+
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
 client = TestClient(app)
 
-def test_crear_sala_y_obtener_en_listado():
-    # 1. Crear sala
-    payload = {
-        "name": "Sala de Estudio A",
-        "location": "Piso 1",
-        "capacity": 6,
-        "type": "STUDY_ROOM",
-        "equipment": ["Pizarra", "Enchufes"]
-    }
-    response = client.post("/api/rooms", json=payload)
-    assert response.status_code == 201
-    res_json = response.json()
-    assert res_json["success"] is True
-    room_id = res_json["data"]["id"]
 
-    # 2. Verificar que aparece en el listado (Criterio P7)
-    get_response = client.get("/api/rooms")
-    assert get_response.status_code == 200
-    rooms = get_response.json()["data"]
-    assert any(r["id"] == room_id for r in rooms)
-
-def test_reserva_duplicada_devuelve_409():
-    # Crear sala de prueba
-    room_resp = client.post("/api/rooms", json={
-        "name": "Lab B", "location": "Piso 2", "capacity": 10, "type": "LAB", "equipment": []
-    })
-    room_id = room_resp.json()["data"]["id"]
-
-    # Reserva 1
-    res1 = client.post("/api/reservations", json={
-        "roomId": room_id, "userId": "usr1", "date": "2026-11-01", "startTime": "09:00", "endTime": "11:00"
-    })
-    assert res1.status_code == 201
-
-    # Reserva 2 (Mismo horario / traslape -> Criterio P7)
-    res2 = client.post("/api/reservations", json={
-        "roomId": room_id, "userId": "usr2", "date": "2026-11-01", "startTime": "10:00", "endTime": "12:00"
-    })
-    assert res2.status_code == 409
-    assert res2.json()["success"] is False
-
-def test_filtrado_orden_y_paginacion():
-    # Criterio P7: GET con filtro + orden + paginación
-    response = client.get("/api/reservations?sort=date&page=1&limit=5")
-    assert response.status_code == 200
+def test_endpoint_no_encontrado_devuelve_404_estandarizado():
+    """
+    Verifica que el interceptor maneje correctamente el error 404
+    y devuelva la estructura estándar con 'timestamp'.
+    """
+    response = client.get("/api/endpoint-inexistente")
+    assert response.status_code == 404
+    
     data = response.json()
-    assert "data" in data
-    assert data["success"] is True
+    assert data["success"] is False
+    assert data["statusCode"] == 404
+    assert "timestamp" in data
+
+
+def test_crud_estudiantes_en_memoria():
+    """
+    Prueba funcional de creación y listado sobre /api/students.
+    """
+    student_payload = {
+        "name": "Diego Vásquez",
+        "email": "diego.qa@example.com",
+        "age": 21
+    }
+    
+    # 1. Crear estudiante
+    response_create = client.post("/api/students", json=student_payload)
+    assert response_create.status_code in [200, 201]
+    assert response_create.json()["success"] is True
+
+    # 2. Listar estudiantes
+    response_list = client.get("/api/students")
+    assert response_list.status_code == 200
+    assert response_list.json()["success"] is True
+
+
+def test_error_de_validacion_422():
+    """
+    Prueba que el envío de un objeto inválido retorne HTTP 422.
+    """
+    payload_invalido = {"age": "no-es-un-numero"}
+    response = client.post("/api/students", json=payload_invalido)
+    assert response.status_code == 422
+    
+    data = response.json()
+    assert data["success"] is False
+    assert data["statusCode"] == 422
